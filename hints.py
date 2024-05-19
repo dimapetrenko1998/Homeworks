@@ -119,3 +119,5 @@ print(list_)
 for i in range(len(list_)):  # Она возвращает нам последовательность чисел от 0 до числа, которое мы укажем в скобках
     print(list_[i])
 print(list_)
+print('hello')
+
