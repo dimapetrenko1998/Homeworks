@@ -106,18 +106,16 @@
 # # как правило ее называют «i», «j» или «k». Обычно, в случае, когда цикл у нас встречается один раз мы называем ее «i».
 # # После переменной мы пишем ключевое слово «in»
 #
-for i in 1, 2, 3, 4:
-    print(i)
-
-list_ = ['one', 'two', 'three']
-
-for i in list_:
-    if i == 'three':
-        list_.remove(i)  # удаляет элемент
-print(list_)
-
-for i in range(len(list_)):  # Она возвращает нам последовательность чисел от 0 до числа, которое мы укажем в скобках
-    print(list_[i])
-print(list_)
-
-
+# for i in 1, 2, 3, 4:
+#     print(i)
+#
+# list_ = ['one', 'two', 'three']
+#
+# for i in list_:
+#     if i == 'three':
+#         list_.remove(i)  # удаляет элемент
+# print(list_)
+#
+# for i in range(len(list_)):  # Она возвращает нам последовательность чисел от 0 до числа, которое мы укажем в скобках
+#     print(list_[i])
+# print(list_)
