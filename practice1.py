@@ -8,7 +8,7 @@ class Database:
 
 class User:
     """
-    Класс пользоывателя, содержащий атрибуты: логин, пароль
+    Класс пользователя, содержащий атрибуты: логин, пароль
     """
     def __init__(self, username, password, passwork_confirm):
         self.username = username
@@ -18,5 +18,12 @@ class User:
 
 if __name__ == '__main__':
     database = Database()
-    user = User(input('Введите логин: '), input('Введите пароль: '), input('Повторите пароль: '))
-    database.add_user(user.username, user.password)
+    while True:
+        choice = input('Приветствую! Выберите действие: \n1 - Вход\n2 - Регистрация\n')
+        user = User(input('Введите логин: '), password := input('Введите пароль: '), password2 := input('Повторите пароль: '))
+        if password != password2:
+            exit()
+    # := маржовый оператор
+        database.add_user(user.username, user.password)
+        print(database.data)
+
