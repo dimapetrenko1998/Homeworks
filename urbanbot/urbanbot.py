@@ -1,16 +1,13 @@
-import asyncio
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram import Router
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from api import api
 
-api = api # api бота лижит в одельном файле что бы каждый раз не писать
+api = api
 bot = Bot(token=api)
-dp = Dispatcher()
-
-router = Router()
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 class UserState(StatesGroup):
@@ -19,43 +16,79 @@ class UserState(StatesGroup):
     weight = State()
 
 
-@router.message(Command("Calories"))
+button_calculate = KeyboardButton(text="Рассчитать")
+button_info = KeyboardButton(text="Информация")
+
+kb = ReplyKeyboardMarkup(
+    keyboard=[[button_calculate], [button_info]],
+    resize_keyboard=True
+)
+
+
+@dp.message_handler(commands=["start"])
+async def start_command(message: types.Message):
+    await message.answer("Добро пожаловать! Выберите опцию:", reply_markup=kb)
+
+
+@dp.message_handler(text="Рассчитать")
 async def set_age(message: types.Message, state: FSMContext):
     await message.answer("Введите свой возраст:")
-    await state.set_state(UserState.age)
+    await UserState.age.set()
 
 
-@router.message(UserState.age)
+@dp.message_handler(state=UserState.age)
 async def set_growth(message: types.Message, state: FSMContext):
-    await state.update_data(age=message.text)
-    await message.answer("Введите свой рост:")
-    await state.set_state(UserState.growth)
+    if message.text == "Информация":
+        await info_command(message, state)
+        return
+
+    try:
+        await state.update_data(age=int(message.text))
+        await message.answer("Введите свой рост:")
+        await UserState.growth.set()
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный возраст.")
 
 
-@router.message(UserState.growth)
+@dp.message_handler(state=UserState.growth)
 async def set_weight(message: types.Message, state: FSMContext):
-    await state.update_data(growth=message.text)
-    await message.answer("Введите свой вес:")
-    await state.set_state(UserState.weight)
+    if message.text == "Информация":
+        await info_command(message, state)
+        return
+
+    try:
+        await state.update_data(growth=int(message.text))
+        await message.answer("Введите свой вес:")
+        await UserState.weight.set()
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный рост.")
 
 
-@router.message(UserState.weight)
+@dp.message_handler(state=UserState.weight)
 async def send_calories(message: types.Message, state: FSMContext):
-    await state.update_data(weight=message.text)
-    data = await state.get_data()
-    age = int(data['age'])
-    growth = int(data['growth'])
-    weight = int(data['weight'])
-    calories = 10 * weight + 6.25 * growth - 5 * age + 5
+    if message.text == "Информация":
+        await info_command(message, state)
+        return
 
-    await message.answer(f"Ваша норма калорий: {calories:.2f} ккал.")
-    await state.clear()
+    try:
+        await state.update_data(weight=int(message.text))
+        data = await state.get_data()
+
+        age = data['age']
+        growth = data['growth']
+        weight = data['weight']
+        calories = 10 * weight + 6.25 * growth - 5 * age + 5
+
+        await message.answer(f"Ваша норма калорий: {calories:.2f} ккал.")
+    except ValueError:
+        await message.answer("Пожалуйста, введите корректный вес.")
 
 
-async def main():
-    dp.include_router(router)
-    await dp.start_polling(bot)
+@dp.message_handler(lambda message: message.text == "Информация")
+async def info_command(message: types.Message, state: FSMContext):
+    await message.answer("Информация о боте.")
+    await state.finish()
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)

@@ -6,8 +6,10 @@
       <excludeFolder url="file://$MODULE_DIR$/module13/bot.venv" />
       <excludeFolder url="file://$MODULE_DIR$/module13/bot/venv" />
       <excludeFolder url="file://$MODULE_DIR$/module13/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/urbanbot/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.10 (Homeworks) (4)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
