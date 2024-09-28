@@ -12,24 +12,24 @@ bot = Bot(token=api)
 
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-# Главная клавиатура
+
 start_kb = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text='Рассчитать'),
             KeyboardButton(text="Информация"),
-            KeyboardButton(text="Купить")  # Добавлена кнопка "Купить"
+            KeyboardButton(text="Купить")
         ]
     ], resize_keyboard=True
 )
 
-# Inline клавиатура для выбора продуктов в ряд
-inline_keyboard = InlineKeyboardMarkup(row_width=4)  # Устанавливаем ширину строки
+
+inline_keyboard = InlineKeyboardMarkup(row_width=4)
 for i in range(1, 5):
     button = InlineKeyboardButton(text=f"Product{i}", callback_data="product_buying")
     inline_keyboard.add(button)
 
-# Клавиатура для расчета калорий
+
 next_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='Рассчитать норму калорий', callback_data='calories')],
@@ -49,7 +49,7 @@ class UserState(StatesGroup):
 async def get_buying_list(message: types.Message):
     for i in range(1, 5):
         product_description = f'Название: Product{i} | Описание: описание {i} | Цена: {i * 100}'
-        await message.answer(product_description)  # Отправляем описание продукта
+        await message.answer(product_description)
         await bot.send_photo(message.chat.id,
                              photo='https://cdn5.imgbb.ru/user/36/369623/201405/a00fc3d46d90c2dbfc5745e95bc893c3.jpg')
 
