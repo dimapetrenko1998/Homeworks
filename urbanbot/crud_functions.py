@@ -10,9 +10,18 @@ def initiate_db():
         title TEXT NOT NULL,
         description TEXT,
         price INTEGER NOT NULL,
-        image_url TEXT NOT NULL
+        image_url TEXT NOT NULL 
     )
     ''')
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL UNIQUE,
+                age INTEGER NOT NULL,
+                balance INTEGER NOT NULL DEFAULT 1000
+            )
+        ''')
     conn.commit()
     conn.close()
 
@@ -52,10 +61,44 @@ def drop_products_table():
     conn.close()
 
 
-def check_table_structure():
+def check_tables():
     conn = sqlite3.connect('my_database.db')
     cursor = conn.cursor()
-    cursor.execute("PRAGMA table_info(Products);")
-    columns = cursor.fetchall()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    print("Существующие таблицы:", tables)
     conn.close()
-    return columns
+
+
+def add_user(username, email, age):
+    try:
+        conn = sqlite3.connect('my_database.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO Users (username, email, age) VALUES (?, ?, ?)
+        ''', (username, email, age))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        print(f"Пользователь с email {email} уже существует.")
+    finally:
+        conn.close()
+
+
+def is_included(username):
+    conn = sqlite3.connect('my_database.db')
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM Users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+
+    conn.close()
+    return user is not None
+
+
+def user_exists(email):
+    conn = sqlite3.connect('my_database.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM Users WHERE email = ?', (email,))
+    exists = cursor.fetchone() is not None
+    conn.close()
+    return exists

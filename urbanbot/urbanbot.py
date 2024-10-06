@@ -1,10 +1,11 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.dispatcher import FSMContext
 from api import api
 from crud_functions import *
+from button import *
 
 api = api
 bot = Bot(token=api)
@@ -15,16 +16,6 @@ drop_products_table()
 initiate_db()
 populate_products()
 
-start_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text='Рассчитать'),
-            KeyboardButton(text="Информация"),
-            KeyboardButton(text="Купить")
-        ]
-    ], resize_keyboard=True
-)
-
 
 class UserState(StatesGroup):
     sex = State()
@@ -33,9 +24,53 @@ class UserState(StatesGroup):
     weight = State()
 
 
+class RegistrationState(StatesGroup):
+    username = State()
+    email = State()
+    age = State()
+
+
 @dp.message_handler(commands=['start'])
 async def start_message(message):
     await message.answer('Привет! Я бот помогающий твоему здоровью.', reply_markup=start_kb)
+
+
+@dp.message_handler(lambda message: message.text == "Регистрация")
+async def sing_up(message: types.Message):
+    await message.answer("Введите имя пользователя (только латинский алфавит):")
+    await RegistrationState.username.set()
+
+
+@dp.message_handler(state=RegistrationState.username)
+async def set_username(message: types.Message, state: FSMContext):
+    username = message.text
+
+    if not is_included(username):
+        await state.update_data(username=username)
+        await message.answer("Введите свой email:")
+        await RegistrationState.email.set()
+    else:
+        await message.answer("Пользователь существует, введите другое имя")
+
+
+@dp.message_handler(state=RegistrationState.email)
+async def set_email(message: types.Message, state: FSMContext):
+    email = message.text
+    await state.update_data(email=email)
+    await message.answer("Введите свой возраст:")
+    await RegistrationState.age.set()
+
+
+@dp.message_handler(state=RegistrationState.age)
+async def set_age(message: types.Message, state: FSMContext):
+    age = int(message.text)
+    data = await state.get_data()
+    username = data.get("username")
+    email = data.get("email")
+
+    add_user(username, email, age)
+    await message.answer("Регистрация завершена! Добро пожаловать!")
+    await state.finish()
 
 
 @dp.message_handler(lambda message: message.text == "Купить")
@@ -126,4 +161,6 @@ async def get_formulas(call: types.CallbackQuery):
 
 
 if __name__ == "__main__":
+    initiate_db()
+    check_tables()
     executor.start_polling(dp, skip_updates=True)
