@@ -1,17 +1,19 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import asyncio
 from api import api
+from crud_functions import *
 
 api = api
 bot = Bot(token=api)
 
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+drop_products_table()
+initiate_db()
+populate_products()
 
 start_kb = ReplyKeyboardMarkup(
     keyboard=[
@@ -24,20 +26,6 @@ start_kb = ReplyKeyboardMarkup(
 )
 
 
-inline_keyboard = InlineKeyboardMarkup(row_width=4)
-for i in range(1, 5):
-    button = InlineKeyboardButton(text=f"Product{i}", callback_data="product_buying")
-    inline_keyboard.add(button)
-
-
-next_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text='Рассчитать норму калорий', callback_data='calories')],
-        [InlineKeyboardButton(text='Формула расчета', callback_data='formulas')]
-    ]
-)
-
-
 class UserState(StatesGroup):
     sex = State()
     age = State()
@@ -45,26 +33,23 @@ class UserState(StatesGroup):
     weight = State()
 
 
-@dp.message_handler(lambda message: message.text == "Купить")
-async def get_buying_list(message: types.Message):
-    for i in range(1, 5):
-        product_description = f'Название: Product{i} | Описание: описание {i} | Цена: {i * 100}'
-        await message.answer(product_description)
-        await bot.send_photo(message.chat.id,
-                             photo='https://cdn5.imgbb.ru/user/36/369623/201405/a00fc3d46d90c2dbfc5745e95bc893c3.jpg')
-
-    await message.answer("Выберите продукт для покупки:", reply_markup=inline_keyboard)
-
-
-@dp.callback_query_handler(lambda call: call.data == "product_buying")
-async def send_confirm_message(call: types.CallbackQuery):
-    await call.answer("Вы успешно приобрели продукт!")
-    await bot.send_message(call.from_user.id, "Вы успешно приобрели продукт!")
-
-
 @dp.message_handler(commands=['start'])
 async def start_message(message):
     await message.answer('Привет! Я бот помогающий твоему здоровью.', reply_markup=start_kb)
+
+
+@dp.message_handler(lambda message: message.text == "Купить")
+async def get_buying_list(message: types.Message):
+    products = get_all_products()
+    if not products:
+        await message.answer("Нет доступных продуктов.")
+        return
+
+    for product in products:
+        product_id, title, description, price, image_url = product
+        product_description = f'Название: {title} | Описание: {description} | Цена: {price}'
+        await message.answer(product_description)
+        await bot.send_photo(message.chat.id, photo=image_url)
 
 
 @dp.message_handler(text='Информация')
@@ -74,11 +59,16 @@ async def inform(message):
 
 @dp.message_handler(text='Рассчитать')
 async def main_menu(message):
-    await message.answer("Выберите опцию", reply_markup=next_kb)
+    await message.answer("Выберите опцию", reply_markup=InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='Рассчитать норму калорий', callback_data='calories')],
+            [InlineKeyboardButton(text='Формула расчета', callback_data='formulas')]
+        ]
+    ))
 
 
 @dp.callback_query_handler(text="calories")
-async def set_age(call):
+async def set_age(call: types.CallbackQuery):
     await call.message.answer("Введите свой возраст:")
     await call.answer()
     await UserState.age.set()
@@ -125,7 +115,7 @@ async def send_calories(message, state):
 
 
 @dp.callback_query_handler(text='formulas')
-async def get_formulas(call):
+async def get_formulas(call: types.CallbackQuery):
     await call.message.answer('''
     Рассчет калорий производится по формуле Миффлина-Сан Жеора
 
