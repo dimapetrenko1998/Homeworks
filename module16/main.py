@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Path
 
 app = FastAPI()
 
@@ -14,10 +14,15 @@ async def admin() -> dict:
 
 
 @app.get("/user/{user_id}")
-async def id(user_id: int) -> dict:
+async def id(
+        user_id: int = Path(..., title="Enter User ID", ge=1, le=100)
+) -> dict:
     return {"messege": f"Вы вошли как пользователь № {user_id}"}
 
 
-@app.get("/user/")
-async def user(usermane: str, age: int) -> dict:
-    return {"messege": f"Информация о пользователе. Имя: {usermane}, Возраст: {age}"}
+@app.get("/user/{username}/{age}")
+async def user(
+        username: str = Path(..., title="Enter username", min_length=5, max_length=20),
+        age: int = Path(..., title="Enter age", ge=18, le=120)
+) -> dict:
+    return {"messege": f"Информация о пользователе. Имя: {username}, Возраст: {age}"}
