@@ -15,7 +15,7 @@ def all_s(db: Annotated[Session, Depends(get_db)]):
     return users
 
 
-#### Функция для получения пользователя по ID
+
 @router.get("/{user_id}", response_model=user)
 def user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)], user=None):
     user = db.execute(select(user).where(user.id == user_id)).scalar_one_or_none()
@@ -32,7 +32,7 @@ def create_user(user: CreateUser, db: Annotated[Session, Depends(get_db)]):
     return {'status_code': status.HTTP_201_CREATED, 'transaction': 'Successful'}
 
 
-#### Функция для обновления пользователя
+
 @router.put("/update/{user_id}", status_code=status.HTTP_200_OK)
 def update_user(user_id: int, user: UpdateUser, db: Annotated[Session, Depends(get_db)]):
     existing_user = db.execute(select(user).where(user.id == user_id)).scalar_one_or_none()
@@ -44,7 +44,7 @@ def update_user(user_id: int, user: UpdateUser, db: Annotated[Session, Depends(g
     return {'status_code': status.HTTP_200_OK, 'transaction': 'User update is successful!'}
 
 
-#### Функция для удаления пользователя
+
 @router.delete("/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
     existing_user = db.execute(select(user).where(user.id == user_id)).scalar_one_or_none()
